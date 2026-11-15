@@ -104,7 +104,9 @@ $accountsFile = Join-Path $PSScriptRoot 'accounts.json'
 function Read-AccountProfiles {
     # No accounts.json yet is fine: the web UI creates it with the first profile.
     $script:accounts = if (Test-Path $accountsFile) { Get-Content $accountsFile -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
-    $script:names = @($script:accounts.PSObject.Properties.Name)
+    # Piped, not .Name: with no profiles .Name gives $null, and @($null) is one empty profile that
+    # crashes the web UI.
+    $script:names = @($script:accounts.PSObject.Properties | ForEach-Object { $_.Name })
 }
 Read-AccountProfiles
 $hasGh = [bool](Get-Command gh -ErrorAction SilentlyContinue)
@@ -168,7 +170,7 @@ function Set-AccountProfile($profileName, $gitName, $email, $user) {
     }
     # WriteAllText: UTF-8 without BOM (Set-Content -Encoding UTF8 adds one in PowerShell 5.1).
     [IO.File]::WriteAllText($accountsFile, ($script:accounts | ConvertTo-Json))
-    $script:names = @($script:accounts.PSObject.Properties.Name)
+    $script:names = @($script:accounts.PSObject.Properties | ForEach-Object { $_.Name })
     Write-Host "Saved profile '$profileName' to accounts.json."
 }
 
@@ -183,7 +185,7 @@ function Remove-AccountProfile($profileName, [switch]$SignOut) {
     # Profile entry first: if a later step fails, only unreferenced leftovers remain, never a profile without its backups.
     $script:accounts.PSObject.Properties.Remove($profileName)
     [IO.File]::WriteAllText($accountsFile, ($script:accounts | ConvertTo-Json))
-    $script:names = @($script:accounts.PSObject.Properties.Name)
+    $script:names = @($script:accounts.PSObject.Properties | ForEach-Object { $_.Name })
     $folder = Join-Path $dataDir $profileName
     if (Test-Path $folder) { Remove-Item $folder -Recurse -Force -ErrorAction Stop }
     foreach ($backup in [CredStore]::List("github-switch:${profileName}:*")) { [CredStore]::Delete($backup.Target) }

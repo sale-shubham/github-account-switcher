@@ -66,6 +66,12 @@ the git name may repeat across profiles. The web UI shows the same two errors on
 (`Invoke-UiApi`), so a profile saved from the CLI while the server runs shows up on **Refresh**, and
 a save from the page never writes back a list that is missing it.
 
+`$names` is built by piping the properties (`| ForEach-Object { $_.Name }`), here and in
+`Set-AccountProfile` / `Remove-AccountProfile`. Never use `@($accounts.PSObject.Properties.Name)`: with
+no profiles (no `accounts.json` yet, or the last one deleted) `.Name` is `$null`, and `@($null)` is one
+entry. That entry reached the web UI as a profile whose fields were all `null`, and its avatar crashed
+the page, which then showed blank (a fresh download showed a blank page).
+
 ### `Remove-AccountProfile $profileName [-SignOut]`
 Forgets a profile, in this order so a failure never leaves a profile without its backups:
 removes it from `accounts.json` (and `$accounts` / `$names`), deletes `<dataDir>\<profile>`
@@ -135,7 +141,8 @@ it has. Run with no arguments to see it.
   (letters, digits, `-`).
 
 ---
-*Last updated: 2026-11-15 (Read-AccountProfiles, Remove-CliLogin, Get-LoginState now; logins ignore case)*
+*Last updated: 2026-11-15 ($names built by piping: zero profiles no longer becomes one empty profile)*
+*Previously: 2026-11-15 (Read-AccountProfiles, Remove-CliLogin, Get-LoginState now; logins ignore case)*
 *Previously: 2026-11-15 (one profile per GitHub login and email; Remove-AccountProfile)*
 *Previously: 2026-11-14 (Get-SwitcherStatus for the web UI; $loginPattern + field checks in Set-AccountProfile)*
 *Previously: 2026-11-14 (Set-GitIdentity)*
