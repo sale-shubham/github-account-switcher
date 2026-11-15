@@ -44,6 +44,15 @@ For every `github-switch:<profile>:*` backup: if the original target is **missin
 **different user**, writes the backup back to the original target and prints
 `Restored token: <target>`. An entry already owned by `$user` is left alone (it may be newer).
 
+### `Get-LoginSpelling $user`
+GitHub's spelling of a login: the `<user>` part of `gh:github.com:<user>`, else of
+`GitHub - https://api.github.com/<user>`, looked up with `[CredStore]::List` and no `*` (one exact
+target; Windows ignores case in target names). Neither found, or `$user` empty: `$user` unchanged.
+Reads target names only, never `.Blob`. Needed because GitHub logins ignore case but
+`gh auth switch --user` does not ("not logged in to github.com account octocat" when gh knows
+`Octocat`). Used by `Set-AccountProfile` (stores that spelling), `Save-ProfileState`, `Switch-Profile`
+and `Remove-CliLogin` (pass it to gh).
+
 ## Notes
 
 - Token bytes never leave memory except into another Credential Manager entry. Never print `.Blob`.
@@ -56,5 +65,6 @@ For every `github-switch:<profile>:*` backup: if the original target is **missin
   The type is only added once per session (`'CredStore' -as [type]` guard).
 
 ---
-*Last updated: 2026-10-30 (code moved to switch-github-core.ps1)*
+*Last updated: 2026-11-15 (Get-LoginSpelling: gh matches logins case-sensitively)*
+*Previously: 2026-10-30 (code moved to switch-github-core.ps1)*
 *Previously: 2026-10-30 (initial methods doc)*

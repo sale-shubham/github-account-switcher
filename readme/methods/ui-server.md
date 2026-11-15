@@ -58,7 +58,7 @@ All JSON. Actions return `{ ok, log: [{ level: info|warn|error, text }] }`.
 | `POST /api/signin` | `{ tool: gh\|git\|desktop\|vscode, user }` | `Start-ToolSignIn` |
 | `POST /api/save` | `{ profile, user, gitName, email }` | `Set-AccountProfile`, then `Invoke-WithAppsClosed { Save-ProfileState }` |
 | `POST /api/switch` | `{ profile }` | `Switch-Profile` |
-| `POST /api/delete` | `{ profile }` | `Remove-AccountProfile` (no app closes) |
+| `POST /api/delete` | `{ profile, signOut }` (`signOut` must be JSON `true` to count; missing = `false`) | `Remove-AccountProfile`, with `-SignOut` when ticked (`Remove-CliLogin`: gh + GCM logout for that account). No app closes |
 
 Unknown route: `404`. An exception outside an action: `500 { error }` and a warning in the console.
 
@@ -88,25 +88,29 @@ React 18 + TypeScript, built with Vite into `web\dist`. No UI library; styles in
 | File | Owns |
 |---|---|
 | `src/api.ts` | Types for every response, token handling, `api.*` calls, `loginPattern` / `profilePattern` (same rules as the core) |
-| `src/tools.ts` | Tool names and `routesFor` - how each tool relates to the active account |
+| `src/tools.ts` | Tool names, `sameLogin` (GitHub logins ignore case; every login comparison in the client uses it), `routesFor` (how each tool relates to the active account), `toolInstalled`, `listNames`, `offAccountTools` (installed tools off the active account, for the Sign in again callout) |
 | `src/App.tsx` | Page state, `run` (busy modal + Activity entry + refresh), Switch confirm, gate screens |
-| `src/components/Identity.tsx` | Active account and the line to each tool |
-| `src/components/Profiles.tsx` | Profile list with saved sign-ins and **Switch** |
-| `src/components/AddAccount.tsx` | Four-step drawer, sign-in polling |
-| `src/draft.ts` | Wizard progress in `localStorage` (`loadDraft` / `saveDraft` / `clearDraft`), so a refresh does not lose it |
-| `src/components/ConfirmDialog.tsx`, `Activity.tsx`, `Avatar.tsx` | Confirm modal, action log, GitHub avatar with initials fallback |
+| `src/components/Identity.tsx` | Active account, the line to each tool, and the Sign in again callout |
+| `src/components/Profiles.tsx` | Profile list with saved sign-ins, **Delete**, **Sign in again** and **Switch** |
+| `src/components/AddAccount.tsx` | Four-step drawer, sign-in polling (row notes from `now`, save-step warning, `onToolsChanged` reloads the page status when a sign-in changes); also signs a saved profile in again (`repair`) |
+| `src/draft.ts` | Wizard progress in `localStorage` (`loadDraft` / `saveDraft` / `clearDraft`), so a refresh does not lose it; `repair` records which profile it signs in again |
+| `src/components/ConfirmDialog.tsx`, `Activity.tsx`, `Avatar.tsx` | Confirm modal (optional `option` checkbox, unticked on every open, passed to `onConfirm`), action log, GitHub avatar with initials fallback |
 
 `npm run check` (= `tsc --noEmit`) typechecks; `npm run build` typechecks and writes `web\dist`.
 
 ## Notes
 
+- Before every route `Invoke-UiApi` runs `Read-AccountProfiles`, so profiles saved from the CLI while
+  the server runs are seen, and a save never writes back an older list.
+- `GET /api/login-state` also returns `now: { gh, git, desktop }`.
 - PowerShell 5.1 strings from `Get-Content` carry `PSPath` etc.; `Get-ActiveProfile` casts to
   `[string]` so `ConvertTo-Json` writes a plain string.
 - `vite.config.ts` proxies `/api` to the server with `changeOrigin`, so the `Host` header is
   `localhost:47821` - the only host the listener accepts.
 
 ---
-*Last updated: 2026-11-15 (POST /api/delete -> Remove-AccountProfile)*
+*Last updated: 2026-11-15 (delete takes signOut; Read-AccountProfiles per request; login-state now; client files)*
+*Previously: 2026-11-15 (POST /api/delete -> Remove-AccountProfile)*
 *Previously: 2026-11-15 (a new -Ui takes over from a running server between requests: Open-UiListener + stop event)*
 *Previously: 2026-11-15 (server window title; port-in-use message says where the old server is)*
 *Previously: 2026-11-15 (src/draft.ts: wizard progress survives a refresh)*

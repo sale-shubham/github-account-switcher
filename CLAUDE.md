@@ -53,7 +53,7 @@ All READMEs live in the `readme/` directory at the project root.
 | `readme/methods/credential-store.md` | `CredStore` (C# P/Invoke), `Backup-Tokens` / `Restore-Tokens`, token target names |
 | `readme/methods/vscode-session.md` | `vscode_secret.py`, VS Code DB locations, secret key, how to re-find it after a VS Code update |
 | `readme/methods/desktop-state.md` | Desktop `Local Storage`, `Get-DesktopLogin`, `Stop-App` / `Start-Apps` / `Invoke-WithAppsClosed`, `Copy-Folder` |
-| `readme/methods/profiles.md` | `accounts.json` schema, data-dir layout, `Get-Account`, `Set-AccountProfile` (one profile per GitHub login/email), `Remove-AccountProfile`, `Get-ActiveProfile`, `Get-LoginState`, `Get-SwitcherStatus`, `Show-Status` |
+| `readme/methods/profiles.md` | `accounts.json` schema, data-dir layout, `Get-Account`, `Set-AccountProfile` (one profile per GitHub login/email), `Read-AccountProfiles`, `Remove-AccountProfile` (+ opt-in `Remove-CliLogin`), `Get-ActiveProfile`, `Get-LoginState`, `Get-SwitcherStatus`, `Show-Status` |
 | `readme/methods/ui-server.md` | `switch-github-ui.ps1` (HttpListener, per-run token, API routes, `Invoke-UiAction`) and the React client file map |
 
 ---
@@ -97,6 +97,9 @@ without touching `readme/`.
    user names only. The VS Code snapshot is the value VS Code already encrypted — never decrypt it.
 2. **Never sign out to switch.** "Sign out" in Desktop / VS Code and `gh auth logout` /
    `git credential-manager github logout` **delete the token**. Use `-Clear`, which moves state aside.
+   The one exception is deleting a profile with the opt-in "Also sign out of GitHub CLI and Git" box
+   ticked (`Remove-AccountProfile -SignOut` -> `Remove-CliLogin`): the user asked for that account to
+   be removed from this PC. Off by default.
 3. **gh switches first, before any change.** It is the step most likely to fail (account not
    logged in to gh); failing there must leave git config, tokens and app state untouched. Keep
    that ordering in `readme/flows/switch.md` in sync.

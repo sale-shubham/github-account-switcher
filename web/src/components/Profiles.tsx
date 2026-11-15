@@ -7,6 +7,7 @@ interface Props {
   activeProfile: string;
   onSwitch: (profile: Profile) => void;
   onDelete: (profile: Profile) => void;
+  onRepair: (profile: Profile) => void;
   onAdd: () => void;
 }
 
@@ -20,7 +21,7 @@ function Saved({ ok, label }: { ok: boolean; label: string }) {
   );
 }
 
-export function Profiles({ profiles, activeProfile, onSwitch, onDelete, onAdd }: Props) {
+export function Profiles({ profiles, activeProfile, onSwitch, onDelete, onRepair, onAdd }: Props) {
   return (
     <section className="panel" aria-labelledby="profiles-title">
       <div className="panel-head">
@@ -52,22 +53,30 @@ export function Profiles({ profiles, activeProfile, onSwitch, onDelete, onAdd }:
                   <Saved ok={profile.vscodeSaved} label="VS Code" />
                 </div>
                 <div className="profile-action">
+                  {active ? null : (
+                    <button
+                      type="button"
+                      className="btn btn-danger-ghost btn-small"
+                      onClick={() => onDelete(profile)}
+                      aria-label={`Delete profile ${profile.name}`}
+                    >
+                      Delete
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-small"
+                    onClick={() => onRepair(profile)}
+                    aria-label={`Sign in again to profile ${profile.name}`}
+                  >
+                    Sign in again
+                  </button>
                   {active ? (
                     <span className="pill pill-active">Active</span>
                   ) : (
-                    <>
-                      <button
-                        type="button"
-                        className="btn btn-danger-ghost btn-small"
-                        onClick={() => onDelete(profile)}
-                        aria-label={`Delete profile ${profile.name}`}
-                      >
-                        Delete
-                      </button>
-                      <button type="button" className="btn btn-secondary" onClick={() => onSwitch(profile)}>
-                        Switch
-                      </button>
-                    </>
+                    <button type="button" className="btn btn-secondary" onClick={() => onSwitch(profile)}>
+                      Switch
+                    </button>
                   )}
                 </div>
               </li>

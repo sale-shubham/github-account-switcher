@@ -25,7 +25,7 @@ multiple-github-account/
 │   │   ├── main.tsx                     # mounts <App>
 │   │   ├── App.tsx                      # page state, action runner, gate screens
 │   │   ├── api.ts                       # API types + calls + per-run token
-│   │   ├── tools.ts                     # tool names, routesFor (tool vs active account)
+│   │   ├── tools.ts                     # tool names, sameLogin, routesFor (tool vs active account), offAccountTools
 │   │   ├── draft.ts                     # add-account progress in localStorage (survives refresh)
 │   │   ├── icons.tsx                    # inline SVG icons + brand mark
 │   │   ├── styles.css                   # design tokens (light/dark) + all styles
@@ -79,7 +79,7 @@ Credential Manager: github-switch:<profile>:<original target>   # token backups
 | File | Owns |
 |---|---|
 | `switch-github.ps1` | Parameters (`<profile>`, `-Save`, `-Clear`, `-Ui`); dot-sources the core (and the UI server for `-Ui`) and dispatches. No logic of its own |
-| `switch-github-core.ps1` | `CredStore` / `StoredCredential` (C#); script-scope state (`$accounts`, `$names`, paths, `$tokenTarget`, `$loginPattern`); `Get-Account`, `Set-AccountProfile`, `Remove-AccountProfile`, `Set-GitIdentity`, `Get-ActiveProfile`, `Get-DesktopSnapshot`, `Get-VSCodeSnapshot`, `Backup-Tokens`, `Restore-Tokens`, `Get-DesktopLogin`, `Save-VSCodeSession`, `Set-VSCodeSession`, `Clear-VSCodeSession`, `Test-VSCodeSession`, `Stop-App`, `Start-Apps`, `Invoke-WithAppsClosed`, `Copy-Folder`, `Get-LoginState`, `Get-SwitcherStatus`, `Show-Status`; operations `Clear-AppState`, `Save-ProfileState`, `Switch-Profile` |
+| `switch-github-core.ps1` | `CredStore` / `StoredCredential` (C#); script-scope state (`$accounts`, `$names`, paths, `$tokenTarget`, `$loginPattern`); `Read-AccountProfiles`, `Get-Account`, `Set-AccountProfile`, `Remove-AccountProfile`, `Remove-CliLogin`, `Set-GitIdentity`, `Get-ActiveProfile`, `Get-DesktopSnapshot`, `Get-VSCodeSnapshot`, `Backup-Tokens`, `Restore-Tokens`, `Get-LoginSpelling`, `Get-DesktopLogin`, `Save-VSCodeSession`, `Set-VSCodeSession`, `Clear-VSCodeSession`, `Test-VSCodeSession`, `Stop-App`, `Start-Apps`, `Invoke-WithAppsClosed`, `Copy-Folder`, `Get-LoginState`, `Get-SwitcherStatus`, `Show-Status`; operations `Clear-AppState`, `Save-ProfileState`, `Switch-Profile` |
 | `switch-github-ui.ps1` | `$uiPort`, `$uiRoot`, `$uiTypes`, `$uiWindowTitle`, `$uiStopEventName`, `$uiTakeoverSeconds`; `Start-UiServer`, `Open-UiListener`, `Invoke-UiRequest`, `Invoke-UiApi`, `Invoke-UiAction`, `Start-ToolSignIn`, `New-UiToken`, `Send-UiFile`, `Send-UiJson`, `Send-UiResponse`, `Read-UiBody` |
 | `vscode_secret.py` | `KEY` (the VS Code secret key), actions `get` / `set` / `clear` / `has`, exit code `3` = no session |
 | `web/src/` | React client — file map in `readme/methods/ui-server.md` |
@@ -115,7 +115,8 @@ Credential Manager: github-switch:<profile>:<original target>   # token backups
 - No committed `web/dist` — build it once with `npm run build`
 
 ---
-*Last updated: 2026-11-15 (MIT LICENSE)*
+*Last updated: 2026-11-15 (Read-AccountProfiles, Remove-CliLogin, Get-LoginSpelling; tools.ts helpers)*
+*Previously: 2026-11-15 (MIT LICENSE)*
 *Previously: 2026-11-15 (GitHub Pages site in docs/)*
 *Previously: 2026-11-15 (Remove-AccountProfile; docs/screenshot.png for the README)*
 *Previously: 2026-11-14 (React web UI + switch-github-ui.ps1 replace the WinForms window)*

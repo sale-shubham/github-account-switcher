@@ -49,6 +49,8 @@ export function App() {
   const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
   // An unfinished add-account wizard (saved in localStorage) reopens after a refresh.
   const [adding, setAdding] = useState(() => loadDraft() !== null);
+  // The profile the wizard signs in again, or null when it adds an account.
+  const [repairing, setRepairing] = useState<string | null>(() => loadDraft()?.repair || null);
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
   const [rewired, setRewired] = useState(0);
   const lastActive = useRef<string | null>(null);
@@ -108,10 +110,25 @@ export function App() {
   const deleteProfile = (profile: Profile) =>
     setConfirmRequest({
       title: `Delete profile ${profile.name}?`,
-      body: `The switcher forgets ${profile.name}: its saved Desktop and VS Code sign-ins and its token backups. The GitHub account @${profile.user} and whatever the apps are signed in to right now are not touched. Nothing closes.`,
+      body: `The switcher forgets ${profile.name}: its saved Desktop and VS Code sign-ins and its token backups. The GitHub account @${profile.user} itself is not touched, and nothing closes.`,
       confirmLabel: 'Delete profile',
-      onConfirm: () => void run(`Delete profile ${profile.name}`, null, () => api.remove(profile.name)),
+      option: {
+        label: `Also sign @${profile.user} out of GitHub CLI and Git on this PC`,
+        hint: 'Off: gh and Git keep this login, so adding the account again skips signing in to them. On: they forget it here; the token stays valid on GitHub until you revoke it there.',
+      },
+      onConfirm: (signOut) =>
+        void run(`Delete profile ${profile.name}${signOut ? ' and sign out' : ''}`, null, () => api.remove(profile.name, signOut)),
     });
+
+  const openAdd = () => {
+    setRepairing(null);
+    setAdding(true);
+  };
+
+  const repair = (profile: Profile) => {
+    setRepairing(profile.name);
+    setAdding(true);
+  };
 
   if (!hasToken) {
     return (
@@ -162,13 +179,14 @@ export function App() {
             {loadError}
           </p>
         ) : null}
-        <Identity status={status} rewired={rewired} onAdd={() => setAdding(true)} />
+        <Identity status={status} rewired={rewired} onAdd={openAdd} onRepair={repair} />
         <Profiles
           profiles={status.profiles}
           activeProfile={status.activeProfile}
           onSwitch={switchTo}
           onDelete={deleteProfile}
-          onAdd={() => setAdding(true)}
+          onRepair={repair}
+          onAdd={openAdd}
         />
         <Activity entries={entries} />
       </main>
@@ -178,7 +196,14 @@ export function App() {
       </footer>
 
       {adding ? (
-        <AddAccount status={status} run={run} confirm={setConfirmRequest} onClose={() => setAdding(false)} />
+        <AddAccount
+          status={status}
+          run={run}
+          confirm={setConfirmRequest}
+          onClose={() => setAdding(false)}
+          onToolsChanged={refresh}
+          repair={repairing}
+        />
       ) : null}
       <ConfirmDialog request={confirmRequest} onClose={() => setConfirmRequest(null)} />
       <BusyDialog text={busy} />

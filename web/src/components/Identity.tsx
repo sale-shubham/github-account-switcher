@@ -1,20 +1,22 @@
 import type { CSSProperties } from 'react';
-import type { Status } from '../api';
+import type { Profile, Status } from '../api';
 import { toolIcons } from '../icons';
-import { routesFor, toolNames } from '../tools';
+import { offAccountTools, routesFor, toolNames } from '../tools';
 import { Avatar } from './Avatar';
 
 interface Props {
   status: Status;
   rewired: number;
   onAdd: () => void;
+  onRepair: (profile: Profile) => void;
 }
 
 // The active account and the line from it to each of the four tools.
-export function Identity({ status, rewired, onAdd }: Props) {
+export function Identity({ status, rewired, onAdd, onRepair }: Props) {
   const active = status.profiles.find((p) => p.name === status.activeProfile);
   const routes = routesFor(status, active?.user);
   const onAccount = routes.filter((r) => r.state === 'ok').length;
+  const offTools = active ? offAccountTools(status, routes) : '';
 
   const summary = !active
     ? 'No profile is active. Add an account to start.'
@@ -75,6 +77,17 @@ export function Identity({ status, rewired, onAdd }: Props) {
           );
         })}
       </ul>
+
+      {active && offTools ? (
+        <div className="card-callout identity-callout">
+          <p>
+            {offTools} not use <span className="nowrap">@{active.user}</span>. Sign in to them again and save the profile.
+          </p>
+          <button type="button" className="btn btn-primary btn-small" onClick={() => onRepair(active)}>
+            Sign in again
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }

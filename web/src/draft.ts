@@ -13,6 +13,8 @@ export interface Draft {
   fields: Fields;
   // The login the apps were prepared for; preparing again is offered when the login changes.
   preparedFor: string;
+  // The profile being signed in again ("Sign in again"), or '' when adding a new account.
+  repair: string;
 }
 
 const key = 'switcher-add-account';
@@ -27,7 +29,12 @@ export function loadDraft(): Draft | null {
     const fields = { ...emptyFields, ...draft.fields };
     if (Object.values(fields).some((v) => typeof v !== 'string')) return null;
     const step = typeof draft.step === 'number' && draft.step >= 0 && draft.step <= 3 ? draft.step : 0;
-    return { step, fields, preparedFor: typeof draft.preparedFor === 'string' ? draft.preparedFor : '' };
+    return {
+      step,
+      fields,
+      preparedFor: typeof draft.preparedFor === 'string' ? draft.preparedFor : '',
+      repair: typeof draft.repair === 'string' ? draft.repair : '',
+    };
   } catch {
     return null;
   }

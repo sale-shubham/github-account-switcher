@@ -23,7 +23,11 @@ export interface Status {
   profiles: Profile[];
 }
 
-export type LoginState = Record<ToolKey, boolean>;
+// Whether each tool is ready for the login being added (the same tests saving uses), and the account
+// gh, git and Desktop use right now (null when signed out). VS Code hides its account.
+export type LoginState = Record<ToolKey, boolean> & {
+  now: { gh: string | null; git: string | null; desktop: string | null };
+};
 
 export interface LogLine {
   level: 'info' | 'warn' | 'error';
@@ -106,7 +110,8 @@ export const api = {
   signIn: (tool: ToolKey, user: string) => post('/api/signin', { tool, user }),
   save: (profile: NewProfile) => post('/api/save', profile),
   switchTo: (profile: string) => post('/api/switch', { profile }),
-  remove: (profile: string) => post('/api/delete', { profile }),
+  // signOut: also sign the account out of gh and Git Credential Manager on this PC.
+  remove: (profile: string, signOut: boolean) => post('/api/delete', { profile, signOut }),
 };
 
 export const loginPattern = /^[A-Za-z0-9-]{1,39}$/;

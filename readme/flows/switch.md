@@ -14,7 +14,9 @@ by `Switch-Profile` in `switch-github-core.ps1`.
    `<dataDir>\<profile>\vscode-github-auth.txt` exists (`$useVSCode`).
 3. `Invoke-WithAppsClosed -Desktop $useDesktop -VSCode $useVSCode` runs steps 4–10: it calls
    `Stop-App` for each app taking part (normal close, 20 s timeout) and remembers which were running.
-4. `gh auth switch --hostname github.com --user <user>`. Non-zero exit → `throw` with the
+4. `gh auth switch --hostname github.com --user <user>`, with `<user>` as GitHub spells it
+   (`Get-LoginSpelling`: gh matches the login case-sensitively, a profile may hold it in other
+   capitals). Non-zero exit → `throw` with the
    `gh auth login` command. Skipped with a warning if `gh` is not installed.
 5. `Backup-Tokens` for **every** profile — refreshes each account's backup from its current entries.
 6. `Restore-Tokens <profile>` — writes back each backed-up target that is missing or held by
@@ -57,7 +59,8 @@ by `Switch-Profile` in `switch-github-core.ps1`.
 - `_previous` keeps only the last replaced state.
 
 ---
-*Last updated: 2026-11-15 (refuses to run from VS Code's terminal when VS Code must close)*
+*Last updated: 2026-11-15 (gh auth switch gets GitHub's spelling of the login)*
+*Previously: 2026-11-15 (refuses to run from VS Code's terminal when VS Code must close)*
 *Previously: 2026-11-14 (Switch button now in the -Ui web page)*
 *Previously: 2026-11-14 (git config step is now Set-GitIdentity, shared with Save)*
 *Previously: 2026-10-30 (moved into Switch-Profile in switch-github-core.ps1; app close via Invoke-WithAppsClosed)*

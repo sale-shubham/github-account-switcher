@@ -318,6 +318,28 @@ code {
   margin-top: 16px;
 }
 
+/* "Sign in again" when tools are off the active account: a full-width row under the routes. */
+.card-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--warn-soft);
+  font-size: 14px;
+}
+
+.identity-callout {
+  grid-column: 1 / -1;
+  margin-top: 24px;
+}
+
+/* A login inside running text: wrap before it, never at its "-". */
+.nowrap {
+  white-space: nowrap;
+}
+
 .trunk {
   height: 2px;
   margin-left: 24px;
@@ -525,6 +547,7 @@ code {
 
 .profile-action {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
@@ -660,6 +683,12 @@ dialog::backdrop {
   background: rgba(10, 16, 28, 0.45);
 }
 
+/* While a modal (drawer, confirm, busy) is open the page behind it does not scroll, so the drawer's
+   own list is the only scrollbar. */
+html:has(dialog:modal) {
+  overflow: hidden;
+}
+
 .dialog {
   width: min(440px, calc(100% - 32px));
   border-radius: 14px;
@@ -673,6 +702,35 @@ dialog::backdrop {
 
 .dialog p {
   color: var(--muted);
+}
+
+.dialog-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-sunken);
+  cursor: pointer;
+}
+
+.dialog-option input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.dialog-option-label {
+  display: block;
+  font-weight: 600;
+}
+
+.dialog-option-hint {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .dialog-actions {
@@ -731,6 +789,8 @@ dialog::backdrop {
   border-radius: 0;
   display: none;
   flex-direction: column;
+  /* Head and footer stay put; only .drawer-body scrolls. */
+  overflow: hidden;
 }
 
 .drawer[open] {
@@ -809,7 +869,11 @@ dialog::backdrop {
 }
 
 .drawer-body {
+  /* relative: .visually-hidden text inside is positioned in this scrolling box. Without it, it is
+     positioned against the dialog, which then grows a second scrollbar. */
+  position: relative;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 24px 28px;
 }
@@ -854,6 +918,12 @@ dialog::backdrop {
 
 .field input[aria-invalid] {
   border-color: var(--danger);
+}
+
+/* The profile name while signing a profile in again: shown, not editable. */
+.field input[readonly] {
+  background: var(--surface-sunken);
+  color: var(--muted);
 }
 
 .field-hint {
@@ -923,6 +993,16 @@ dialog::backdrop {
 .signin-help {
   font-size: 12.5px;
   color: var(--muted);
+}
+
+.signin-note {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.signin-note-warn {
+  color: var(--warn);
 }
 
 .signin-state {

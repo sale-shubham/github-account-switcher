@@ -15,10 +15,10 @@ Same doc-sync policy as the author's other repositories, with this project's fil
 | `web/src/**` (page, add-account steps, status rows) | `readme/flows/ui.md` |
 | `switch-github-ui.ps1` (server, token, API routes), `web/src/api.ts` | `readme/methods/ui-server.md` |
 | `switch-github.ps1` parameters / dispatch | `README.md` usage + the flow doc of the command |
-| `CredStore`, `Backup-Tokens`, `Restore-Tokens`, `$tokenTarget` | `readme/methods/credential-store.md` |
+| `CredStore`, `Backup-Tokens`, `Restore-Tokens`, `Get-LoginSpelling`, `$tokenTarget` | `readme/methods/credential-store.md` |
 | `vscode_secret.py`, `$vscodeDbs`, `$vscodeExe`, `*-VSCodeSession` | `readme/methods/vscode-session.md` |
 | `$desktopStorage`, `$desktopExe`, `Get-DesktopLogin`, `Stop-App`, `Start-Apps`, `Invoke-WithAppsClosed`, `Copy-Folder` | `readme/methods/desktop-state.md` |
-| `accounts.json`, `$dataDir` layout, `$loginPattern`, `Get-Account`, `Set-AccountProfile`, `Remove-AccountProfile`, `Get-ActiveProfile`, `Get-LoginState`, `Get-SwitcherStatus`, `Show-Status` | `readme/methods/profiles.md` |
+| `accounts.json`, `$dataDir` layout, `$loginPattern`, `Get-Account`, `Read-AccountProfiles`, `Set-AccountProfile`, `Remove-AccountProfile`, `Remove-CliLogin`, `Get-ActiveProfile`, `Get-LoginState`, `Get-SwitcherStatus`, `Show-Status` | `readme/methods/profiles.md` |
 | Storage locations, lifecycle, limitations | `readme/ARCHITECTURE.md` |
 | `docs/index.html` (public GitHub Pages site) | `README.md` - the site repeats its facts |
 
@@ -70,7 +70,8 @@ Same doc-sync policy as the author's other repositories, with this project's fil
 - **Every doc carries a `*Last updated:*` footer** with a one-line reason, newest first.
 
 ---
-*Last updated: 2026-11-15 (public site docs/index.html rows)*
+*Last updated: 2026-11-15 (Read-AccountProfiles, Remove-CliLogin, Get-LoginSpelling rows)*
+*Previously: 2026-11-15 (public site docs/index.html rows)*
 *Previously: 2026-11-15 (Remove-AccountProfile row)*
 *Previously: 2026-11-14 (web UI + API replace the login window)*
 *Previously: 2026-10-30 (core split + login window rows)*

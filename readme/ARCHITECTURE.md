@@ -89,7 +89,8 @@ Full detail: `readme/flows/switch.md`.
 - **No save-back.** A switch restores the snapshot from `-Save` time; Desktop preferences changed
   since then are replaced (the replaced state is kept in `_previous`, one level deep).
 - **gh logout is not recoverable from backups alone** — `gh auth logout` also removes the account
-  from `hosts.yml`; run `gh auth login` again.
+  from `hosts.yml`; run `gh auth login` again. The switcher runs it only when a profile is deleted
+  with "Also sign out of GitHub CLI and Git" ticked (`Remove-CliLogin`).
 - **`_cleared\<timestamp>` folders accumulate** — delete old ones by hand.
 - **Desktop is reopened from the exact exe path that was running** (`app-3.6.x\GitHubDesktop.exe`).
 - **Desktop's repository list is shared by all profiles** (it lives in IndexedDB; only `Local Storage`
@@ -119,7 +120,8 @@ Full detail: `readme/flows/switch.md`.
   closed VS Code; wizard input was lost on refresh; a second `-Ui` could not take over the port.
 
 ---
-*Last updated: 2026-11-15 (web UI verified against real apps; untested limitation removed)*
+*Last updated: 2026-11-15 (gh logout only on an opt-in profile delete)*
+*Previously: 2026-11-15 (web UI verified against real apps; untested limitation removed)*
 *Previously: 2026-11-14 (web UI replaces the WinForms window: components, security, limitations)*
 *Previously: 2026-11-14 (real-app run done: untested limitation removed; shared Desktop repo list, app logs in console)*
 *Previously: 2026-10-30 (core split + login window components and limitations)*

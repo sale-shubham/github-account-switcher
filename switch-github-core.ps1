@@ -98,9 +98,15 @@ public static class CredStore {
 }
 
 $accountsFile = Join-Path $PSScriptRoot 'accounts.json'
-# No accounts.json yet is fine: the web UI creates it with the first profile.
-$accounts = if (Test-Path $accountsFile) { Get-Content $accountsFile -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
-$names = @($accounts.PSObject.Properties.Name)
+
+# (Re)reads accounts.json into $accounts / $names. The web UI server calls it before every request, so a
+# profile saved from the CLI while the server runs shows up, and the server never writes back an old list.
+function Read-AccountProfiles {
+    # No accounts.json yet is fine: the web UI creates it with the first profile.
+    $script:accounts = if (Test-Path $accountsFile) { Get-Content $accountsFile -Raw | ConvertFrom-Json } else { [pscustomobject]@{} }
+    $script:names = @($script:accounts.PSObject.Properties.Name)
+}
+Read-AccountProfiles
 $hasGh = [bool](Get-Command gh -ErrorAction SilentlyContinue)
 
 $dataDir = Join-Path $env:LOCALAPPDATA 'github-switch'
@@ -141,6 +147,12 @@ function Set-AccountProfile($profileName, $gitName, $email, $user) {
     }
     if ($user -notmatch $loginPattern) { throw "GitHub login '$user' is not valid (letters, digits and '-', up to 39)." }
     if (-not ($gitName -and $email)) { throw 'Git name and email are required.' }
+    # Keep the login as GitHub spells it, so the profile shows the same text as gh and Desktop.
+    $spelled = Get-LoginSpelling $user
+    if ($spelled -cne $user) {
+        Write-Host "GitHub spells the login '$spelled'; saved that way."
+        $user = $spelled
+    }
     # One profile per GitHub account: GitHub logins are unique, and an email belongs to one account at
     # a time (GitHub attributes commits by email). -eq is case-insensitive, like GitHub's comparison.
     foreach ($other in $script:names) {
@@ -161,9 +173,10 @@ function Set-AccountProfile($profileName, $gitName, $email, $user) {
 }
 
 # Forgets a profile: its accounts.json entry, its app snapshots and its token backups. Live sign-ins
-# (the tools' own Credential Manager entries) are not touched, so no account is signed out.
-function Remove-AccountProfile($profileName) {
-    $null = Get-Account $profileName
+# (the tools' own Credential Manager entries) are not touched, so no account is signed out - unless
+# -SignOut, ticked in the web UI's delete dialog, also removes the account from gh and GCM.
+function Remove-AccountProfile($profileName, [switch]$SignOut) {
+    $user = (Get-Account $profileName).user
     # The name becomes a folder path below; never let it reach _previous, _cleared or a parent.
     if ($profileName -notmatch '^[A-Za-z0-9-]+$') { throw "Profile name '$profileName' is not valid." }
     if ((Get-ActiveProfile) -eq $profileName) { throw "'$profileName' is the active profile. Switch to another profile first." }
@@ -175,6 +188,35 @@ function Remove-AccountProfile($profileName) {
     if (Test-Path $folder) { Remove-Item $folder -Recurse -Force -ErrorAction Stop }
     foreach ($backup in [CredStore]::List("github-switch:${profileName}:*")) { [CredStore]::Delete($backup.Target) }
     Write-Host "Deleted profile '$profileName' (its saved sign-ins and token backups). The GitHub account itself is unchanged."
+    if ($SignOut) { Remove-CliLogin $user }
+}
+
+# Signs one account out of gh and Git Credential Manager on this PC with their own logout commands. Those
+# delete the local token only; it is not revoked on GitHub. Only for deleting a profile when the user asks:
+# never part of a switch. Desktop and VS Code hold one sign-in each, which Clear-AppState moves aside.
+function Remove-CliLogin($user) {
+    if (-not $hasGh) {
+        Write-Host 'GitHub CLI is not installed, nothing to sign out there.'
+    } elseif ([CredStore]::List("gh:github.com:$user")) {
+        # gh matches the login case-sensitively; when it was the active account, gh picks another one.
+        gh auth logout --hostname github.com --user (Get-LoginSpelling $user)
+        if ($LASTEXITCODE -ne 0) { Write-Warning "GitHub CLI could not sign '$user' out." }
+    } else {
+        Write-Host "GitHub CLI has no login for '$user'."
+    }
+
+    # GCM's own spelling of the login, found ignoring case like GitHub does.
+    $gcmLogin = @(git credential-manager github list 2>$null) | Where-Object { $_ -eq $user } | Select-Object -First 1
+    if ($gcmLogin) {
+        git credential-manager github logout $gcmLogin --no-ui
+        if ($LASTEXITCODE -eq 0) { Write-Host "Git Credential Manager signed '$gcmLogin' out." }
+        else { Write-Warning "Git Credential Manager could not sign '$user' out." }
+    } else {
+        Write-Host "Git Credential Manager has no login for '$user'."
+    }
+    if ((git config --global credential.https://github.com.username) -eq $user) {
+        Write-Warning "Git's default account is still '$user', so the next push asks to sign in. Switch to another profile first."
+    }
 }
 
 # Makes git commits and pushes use this account: identity + Git Credential Manager default account.
@@ -199,6 +241,18 @@ function Backup-Tokens($profileName, $user) {
             [CredStore]::Write($prefix + $c.Target, $c.User, $c.Blob, $c.Persist)
         }
     }
+}
+
+# GitHub logins ignore case, but `gh auth switch --user` does not, and gh and Desktop keep the login as GitHub
+# spells it ("Octocat") while a profile may hold it as typed ("octocat"). Returns GitHub's spelling from gh's
+# or Desktop's Credential Manager entry (the lookup ignores case), else $user unchanged.
+function Get-LoginSpelling($user) {
+    if (-not $user) { return $user }
+    foreach ($prefix in 'gh:github.com:', 'GitHub - https://api.github.com/') {
+        $entry = @([CredStore]::List("$prefix$user"))
+        if ($entry.Count) { return $entry[0].Target.Substring($prefix.Length) }
+    }
+    $user
 }
 
 function Restore-Tokens($profileName, $user) {
@@ -295,13 +349,22 @@ function Copy-Folder($from, $to) {
     Copy-Item $from $to -Recurse -ErrorAction Stop
 }
 
-# Which tools hold a sign-in for $user right now. Local checks only, no network.
+# Is each tool ready for $user, by the same tests Save-ProfileState uses? gh and git only need a login
+# for $user (saving switches them to it). Desktop must show $user in the app: a token left in Credential
+# Manager does not count, saving keeps Desktop only when Get-DesktopLogin matches. "now" is the account each
+# tool uses at this moment. Local checks only, no network: the web UI polls this every few seconds.
 function Get-LoginState($user) {
+    $desktopNow = Get-DesktopLogin
     [ordered]@{
         gh      = [bool]([CredStore]::List("gh:github.com:$user"))
         git     = @(git credential-manager github list 2>$null) -contains $user
-        desktop = [bool]([CredStore]::List("GitHub - https://api.github.com/$user"))
+        desktop = [bool]$desktopNow -and $desktopNow -eq $user
         vscode  = $hasVSCode -and (Test-VSCodeSession)
+        now     = [ordered]@{
+            gh      = $(if ($hasGh) { gh config get user -h github.com 2>$null })
+            git     = git config --global credential.https://github.com.username
+            desktop = $desktopNow
+        }
     }
 }
 
@@ -391,7 +454,7 @@ function Save-ProfileState($profileName) {
 
     # Saving marks the profile active, so gh and git must point at it too - they are not part of the snapshot.
     if ($hasGh -and [CredStore]::List("gh:github.com:$($account.user)")) {
-        gh auth switch --hostname github.com --user $account.user
+        gh auth switch --hostname github.com --user (Get-LoginSpelling $account.user)
     } elseif ($hasGh) {
         Write-Warning "gh has no login for '$($account.user)'. Run: gh auth login --hostname github.com --web"
     }
@@ -409,7 +472,7 @@ function Switch-Profile($profileName) {
     Invoke-WithAppsClosed -Desktop $useDesktop -VSCode $useVSCode -Action {
         # gh before any change: it is the step most likely to fail, and failing here leaves everything untouched.
         if ($hasGh) {
-            gh auth switch --hostname github.com --user $account.user
+            gh auth switch --hostname github.com --user (Get-LoginSpelling $account.user)
             if ($LASTEXITCODE -ne 0) {
                 throw "gh has no login for '$($account.user)'. Run: gh auth login --hostname github.com --web"
             }

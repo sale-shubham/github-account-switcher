@@ -20,8 +20,8 @@ run inside `Invoke-WithAppsClosed`. The window first writes the profile to `acco
    - Exit 3 (no session) → warning, nothing written (an older snapshot stays).
    - No Python / no VS Code DB → warning.
 5. `Backup-Tokens <profile> <user>` — copies every live token entry whose user is `<user>`.
-6. Make the profile active for the tools that are not snapshotted: `gh auth switch` to `<user>`
-   if gh has a login for it (else a warning), then `Set-GitIdentity` — global `user.name`,
+6. Make the profile active for the tools that are not snapshotted: `gh auth switch` to `<user>` as
+   GitHub spells it (`Get-LoginSpelling`; gh matches case) if gh has a login for it (else a warning), then `Set-GitIdentity` — global `user.name`,
    `user.email` and `credential.https://github.com.username`.
 7. Write `<profile>` to `current.txt`.
 8. `Invoke-WithAppsClosed` reopens the apps that were running (also after a failure).
@@ -50,7 +50,8 @@ run inside `Invoke-WithAppsClosed`. The window first writes the profile to `acco
   for how reliable that is.
 
 ---
-*Last updated: 2026-11-14 (Save profile button now in the -Ui web page; example made generic)*
+*Last updated: 2026-11-15 (gh auth switch gets GitHub's spelling of the login)*
+*Previously: 2026-11-14 (Save profile button now in the -Ui web page; example made generic)*
 *Previously: 2026-11-14 (Save also switches gh and sets git identity + GCM user, so "Active profile" is true)*
 *Previously: 2026-10-30 (moved into Save-ProfileState; also used by the -Login window)*
 *Previously: 2026-10-30 (initial flow doc)*

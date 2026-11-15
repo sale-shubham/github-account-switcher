@@ -84,7 +84,7 @@ When asked to create a ticket (GitHub issue), once a GitHub repo exists:
 - Python: one short module docstring, stdlib only, exit codes as the contract with the PowerShell caller (`3` = no session).
 - Comments explain **why**, not what — one line above the non-obvious block. The existing ones (gh-first ordering, backup-before-restore, `gh:github.com:` skip, LevelDB login scan) are the model.
 - No commented-out code.
-- **Reuse before creating.** Before writing a helper, check `switch-github-core.ps1`: `$loginPattern`, `Get-Account`, `Set-AccountProfile`, `Remove-AccountProfile`, `Set-GitIdentity`, `Get-ActiveProfile`, `Backup-Tokens`, `Restore-Tokens`, `Get-DesktopLogin`, `Save-VSCodeSession`, `Set-VSCodeSession`, `Clear-VSCodeSession`, `Test-VSCodeSession`, `Stop-App`, `Start-Apps`, `Invoke-WithAppsClosed`, `Copy-Folder`, `Get-LoginState`, `Get-SwitcherStatus`, `Show-Status`, the operations `Save-ProfileState` / `Clear-AppState` / `Switch-Profile`, and `[CredStore]::List/Write/Delete`.
+- **Reuse before creating.** Before writing a helper, check `switch-github-core.ps1`: `$loginPattern`, `Read-AccountProfiles`, `Get-Account`, `Set-AccountProfile`, `Remove-AccountProfile`, `Remove-CliLogin` (opt-in delete only, never in a switch), `Set-GitIdentity`, `Get-ActiveProfile`, `Backup-Tokens`, `Restore-Tokens`, `Get-LoginSpelling` (gh matches logins case-sensitively; never pass a typed login to `gh auth switch`), `Get-DesktopLogin`, `Save-VSCodeSession`, `Set-VSCodeSession`, `Clear-VSCodeSession`, `Test-VSCodeSession`, `Stop-App`, `Start-Apps`, `Invoke-WithAppsClosed`, `Copy-Folder`, `Get-LoginState`, `Get-SwitcherStatus`, `Show-Status`, the operations `Save-ProfileState` / `Clear-AppState` / `Switch-Profile`, and `[CredStore]::List/Write/Delete`.
 - **Entry points stay thin.** `switch-github.ps1` (CLI) and `switch-github-ui.ps1` (API server) call core functions; logic goes in the core. The React code only displays state and calls the API - it never decides how a switch, save or clear works.
 - **API responses go through `Send-UiJson`; actions through `Invoke-UiAction`** so every printed line reaches the Activity log. Return `List.ToArray()`, not `@($list)` (PS 5.1 `ConvertTo-Json` bug).
 - **React:** function components + hooks, TypeScript strict, one component per file in `web/src/components/`, types for every API response in `web/src/api.ts`. Colors only through the CSS variables in `styles.css` (light + dark). Dialogs are native `<dialog>` with `showModal()`.
@@ -165,7 +165,8 @@ RULES.md is auto-injected at the start of every session via the `SessionStart` h
 
 ---
 
-*Last updated: 2026-11-15 (Remove-AccountProfile in the reuse list)*
+*Last updated: 2026-11-15 (reuse list: Read-AccountProfiles, Remove-CliLogin, Get-LoginSpelling)*
+*Previously: 2026-11-15 (Remove-AccountProfile in the reuse list)*
 *Previously: 2026-11-14 (React web UI + API server replace the WinForms window: deps, style, test step 4)*
 *Previously: 2026-10-30 (core split, login window: reuse list, thin entry points, GUI test step)*
 *Previously: 2026-10-30 (initial Claude setup, following the p2x layout)*

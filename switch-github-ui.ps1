@@ -123,6 +123,8 @@ function Invoke-UiApi($context) {
     $request = $context.Request
     $route = "$($request.HttpMethod) $($request.Url.AbsolutePath)"
     if ($request.HttpMethod -eq 'POST') { Write-Host "$(Get-Date -Format 'HH:mm:ss') $route" }
+    # Profiles saved from the CLI since the last request; everything else every route reads live anyway.
+    Read-AccountProfiles
     switch ($route) {
         'GET /api/status' {
             Send-UiJson $context (Get-SwitcherStatus)
@@ -155,7 +157,8 @@ function Invoke-UiApi($context) {
         }
         'POST /api/delete' {
             $body = Read-UiBody $request
-            Send-UiJson $context (Invoke-UiAction { Remove-AccountProfile "$($body.profile)" })
+            # signOut: the delete dialog's opt-in "also sign out of GitHub CLI and Git"; missing = false.
+            Send-UiJson $context (Invoke-UiAction { Remove-AccountProfile "$($body.profile)" -SignOut:($body.signOut -eq $true) })
         }
         'POST /api/switch' {
             $body = Read-UiBody $request

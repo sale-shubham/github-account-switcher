@@ -18,8 +18,10 @@ sign-ins safe, and puts them back when you switch.
   mismatches flagged.
 - **One-click switch** between profiles, with a confirmation and a full log of what changed.
 - **One profile per GitHub account**: a username or email already in use is refused, and a
-  profile can be deleted without touching the account or the apps.
+  profile can be deleted without touching the account or the apps, or, if you tick the box, also
+  signed out of the GitHub CLI and Git on this PC.
 - **Guided add-account flow**: prepare the apps, sign in to each tool with live status, save.
+  **Sign in again** reopens it for a saved profile, to fix one saved before every tool was signed in.
 - **Nothing is ever signed out**. Tokens are backed up and restored inside Windows Credential
   Manager, and app sign-ins are moved aside, never deleted.
 - **Local only**. A localhost server with a per-run key. Tokens are never shown, logged or sent
